@@ -750,6 +750,10 @@ serial: <device path>
 # In practice, simply set it to the desired delay; it'll be round up in the worst case.
 #fan_kick_start_time: 0.5
 
+# int, Hz - Fan PWM frequency.
+# Typical 4-wire PWM fans expect ~25 kHz.
+#fan_pwm_frequency: 25000
+
 
 # Fan Policy
 # Controls how/when the fan turns on automatically.

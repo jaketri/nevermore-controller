@@ -24,8 +24,6 @@ BLE_DECL_SCALAR(RPM16, uint16_t, 1, 0, 0);
 constexpr uint8_t FAN_CONTROL_UPDATE_HZ = 10;
 
 constexpr uint8_t TACHOMETER_PULSE_PER_REVOLUTION = 2;
-constexpr uint32_t FAN_PWM_HZ = 25'000;
-
 sensors::Tachometer g_tachometer;
 
 struct FanPowerControl {
@@ -165,15 +163,20 @@ BLE::Percentage8 fan_power_override() {
     return g_fan_power_override;
 }
 
-bool init() {
-    // setup PWM configurations for fan PWM and fan tachometer
+void fan_pwm_frequency_apply() {
+    auto const hz = settings::g_active.fan_pwm_frequency_hz.raw_value;
     for (auto&& pin : Pins::active().fan_pwm) {
         if (!pin) continue;
 
         auto cfg = pwm_get_default_config();
-        pwm_config_set_freq_hz(cfg, FAN_PWM_HZ);
+        pwm_config_set_freq_hz(cfg, hz);
         pwm_init(pwm_gpio_to_slice_num_(pin), &cfg, true);
     }
+}
+
+bool init() {
+    // setup PWM configurations for fan PWM and fan tachometer
+    fan_pwm_frequency_apply();
 
     g_tachometer.setup(Pins::active().fan_tachometer, TACHOMETER_PULSE_PER_REVOLUTION);
     g_tachometer.start();
@@ -233,6 +236,7 @@ optional<uint16_t> attr_read(
         USER_DESCRIBE(FAN_POWER_ABS_MIN, "Fan % Abs. - Minimum Power")
         USER_DESCRIBE(FAN_POWER_ABS_KICK_START_MIN, "Fan % Abs. - Minimum Kick-start Power")
         USER_DESCRIBE(FAN_KICK_START_TIME, "Fan - Kick-start Time")
+        USER_DESCRIBE(FAN_PWM_FREQUENCY, "Fan PWM Frequency (Hz)")
         USER_DESCRIBE(FAN_TACHOMETER, "Fan RPM")
         USER_DESCRIBE(FAN_POWER_TACHO_AGGREGATE, "Aggregated Fan % and RPM")
         USER_DESCRIBE(FAN_AGGREGATE, "Aggregated Service Data")
@@ -250,6 +254,7 @@ optional<uint16_t> attr_read(
         READ_VALUE(FAN_POWER_ABS_MIN, settings::g_active.fan_power_min)
         READ_VALUE(FAN_POWER_ABS_KICK_START_MIN, settings::g_active.fan_power_kick_start_min)
         READ_VALUE(FAN_KICK_START_TIME, BLE::TimeMilli24(1000.f * settings::g_active.fan_kick_start_sec))
+        READ_VALUE(FAN_PWM_FREQUENCY, settings::g_active.fan_pwm_frequency_hz)
         READ_VALUE(FAN_TACHOMETER, FanPowerTachoAggregate{}.tachometer)
         READ_VALUE(FAN_POWER_TACHO_AGGREGATE, FanPowerTachoAggregate{})
         READ_VALUE(FAN_AGGREGATE, Aggregate{});  // default init populate from global state
@@ -330,6 +335,17 @@ optional<int> attr_write(hci_con_handle_t conn, uint16_t attr, span<uint8_t cons
         if (sec < 0 || 1 < sec) throw AttrWriteException(ATT_ERROR_VALUE_NOT_ALLOWED);
 
         settings::g_active.fan_kick_start_sec = sec;
+        return 0;
+    }
+
+    case HANDLE_ATTR(FAN_PWM_FREQUENCY, VALUE): {
+        BLE::Count16 value = consume;
+        if (value == BLE::NOT_KNOWN || value.raw_value == 0)
+            throw AttrWriteException(ATT_ERROR_VALUE_NOT_ALLOWED);
+
+        settings::g_active.fan_pwm_frequency_hz = value;
+        fan_pwm_frequency_apply();
+        g_fan.update();
         return 0;
     }
 

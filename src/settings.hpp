@@ -141,6 +141,7 @@ struct [[gnu::packed]] SettingsV0 {
     PeriodSecInverse<uint8_t, 0.f, 1.f> fan_kick_start_sec = 0.5f;
     BLE::Percentage8 fan_power_min = 17.5;           // Delta BFB0712HF
     BLE::Percentage8 fan_power_kick_start_min = 18;  // Delta BFB0712HF
+    BLE::Count16 fan_pwm_frequency_hz = 25'000;
 
     // replaces valid fields from RHS into self
     void merge_valid_fields(SettingsV0 const&);

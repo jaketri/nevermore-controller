@@ -817,6 +817,10 @@ class Nevermore:
             CmdFanKickStartTime,
             config.getfloat("fan_kick_start_time", default=None, minval=0, maxval=1),
         )
+        self._fan_pwm_frequency = opt(
+            CmdFanPwmFrequency,
+            config.getint("fan_pwm_frequency", default=None, minval=1, maxval=65534),
+        )
 
         self._fan_thermal_limit = CmdFanPolicyThermalLimit(
             config.getfloat("fan_thermal_limit_temperature_min", default=None),
@@ -962,6 +966,7 @@ class Nevermore:
         self._interface.send_command(self._fan_power_min)
         self._interface.send_command(self._fan_power_kick_start_min)
         self._interface.send_command(self._fan_kick_start_time)
+        self._interface.send_command(self._fan_pwm_frequency)
         self._interface.send_command(self._fan_thermal_limit)
         self._interface.send_command(self._display_brightness)
         self._interface.send_command(self._display_ui)
