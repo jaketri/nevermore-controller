@@ -131,6 +131,7 @@ UUID_CHAR_DATA_AGGREGATE = UUID("75134bec-dd06-49b1-bac2-c15e05fd7199")
 UUID_CHAR_FAN_TACHO = UUID("03f61fe0-9fe7-4516-98e6-056de551687f")
 UUID_CHAR_FAN_AGGREGATE = UUID("79cd747f-91af-49a6-95b2-5b597c683129")
 UUID_CHAR_FAN_THERMAL = UUID("45d2e7d7-40c4-46a6-a160-43eb02d01e27")
+UUID_CHAR_FAN_PWM_FREQUENCY = UUID("b033591c-fb04-403f-a9bb-dee18b1121ae")
 UUID_CHAR_VOC_INDEX = UUID("216aa791-97d0-46ac-8752-60bbc00611e1")
 UUID_CHAR_WS2812_UPDATE = UUID("5d91b6ce-7db1-4e06-b8cb-d75e7dd49aae")
 UUID_CHAR_SERVO_RANGE = UUID("9c327c7f-188f-4345-950f-bd586f13f324")
@@ -592,6 +593,7 @@ class CommBindings:
             self.fan_power_kick_start_min,
         ) = self.fan.many(UUID_CHAR_PERCENT8, 6, {P.WRITE})
         self.fan_kick_start_time = self.fan(UUID_CHAR_TIMEMILLI24, {P.WRITE})
+        self.fan_pwm_frequency = self.fan(UUID_CHAR_FAN_PWM_FREQUENCY, {P.WRITE})
         self.ws2812_length = self.ws2812(UUID_CHAR_COUNT16, {P.WRITE})
         self.ws2812_update = self.ws2812(
             UUID_CHAR_WS2812_UPDATE, {P.WRITE_WITHOUT_RESPONSE}
@@ -707,6 +709,15 @@ class CmdFanKickStartTime(CommandSimple):
     @override
     def params(self) -> bytes:
         return BleAttrWriter().time_milli_24(self.time_sec * 1000).value
+
+
+@cmd_simple(lambda x: x.fan_pwm_frequency)
+class CmdFanPwmFrequency(CommandSimple):
+    hz: int
+
+    @override
+    def params(self) -> bytes:
+        return self.hz.to_bytes(2, "little", signed=False)
 
 
 @cmd_simple(lambda x: x.fan_thermal_limit)

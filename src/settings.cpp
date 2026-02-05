@@ -398,6 +398,7 @@ void save(SettingsPersisted& settings) {
     SETTINGS_FIELD_CHECK(pins);
     SETTINGS_FIELD_CHECK(servo_vent);
     SETTINGS_FIELD_CHECK(_1);
+    SETTINGS_FIELD_CHECK(fan_pwm_frequency_hz);
 #undef SETTINGS_FIELD_CHECK
 
     if (reinterpret_cast<SettingsPersisted const*>(g_active_slot.load())->voc_calibration !=
@@ -452,6 +453,7 @@ void SettingsV0::merge_valid_fields(SettingsV0 const& x) {
 
     if (x.servo_vent.validate()) servo_vent = x.servo_vent;
     flags = x.flags;
+    if (x.fan_pwm_frequency_hz != BLE::NOT_KNOWN) fan_pwm_frequency_hz = x.fan_pwm_frequency_hz;
 }
 
 }  // namespace nevermore::settings
