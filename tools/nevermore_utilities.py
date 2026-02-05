@@ -717,7 +717,7 @@ class CmdFanPwmFrequency(CommandSimple):
 
     @override
     def params(self) -> bytes:
-        return int(self.hz).to_bytes(2, "little", signed=False)
+        return self.hz.to_bytes(2, "little", signed=False)
 
 
 @cmd_simple(lambda x: x.fan_thermal_limit)
